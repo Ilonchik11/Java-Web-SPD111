@@ -21,10 +21,11 @@
 <header>
     <nav>
         <div class="nav-wrapper purple">
-            <a href="#" class="brand-logo">Logo</a>
+            <a href="#" class="brand-logo">My First Java Website</a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
                 <li><a href="<%= context %>/cart"><i class="material-icons prefix">shopping_cart</i></a></li>
                 <li><a href="<%= context %>/promotion">Promotions</a></li>
+                <li><a href="<%= context %>/signup"><i class="material-icons prefix">person_add</i></a></li>
             </ul>
         </div>
     </nav>
