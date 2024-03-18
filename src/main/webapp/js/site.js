@@ -5,6 +5,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
     // шукаємо кнопку автентифікації, якщо знаходимо - додаємо обробник
     const authButton = document.getElementById("auth-button");
     if(authButton) { authButton.onclick = authButtonClick; }
+    // шукаємо кнопку додавання товарів, якщо знаходимо - додаємо обробник
+    const addItemButton = document.getElementById("addProduct-button");
+    if(addItemButton) { addItemButton.onclick = addItemButtonClick; }
     // налаштування модальних вікон
     var elems = document.querySelectorAll('.modal');
     M.Modal.init(elems, {
@@ -77,6 +80,63 @@ function signupButtonClick(e) {
     formData.append( "user-password", passwordInput.value ) ;
     if( avatarInput.files.length > 0 ) {
         formData.append( "user-avatar", avatarInput.files[0] ) ;
+    }
+
+    // передаємо - формуємо запит
+    fetch( window.location.href, { method: 'POST', body: formData } )
+        .then( r => r.json() )
+        .then( j => {
+            console.log(j);
+            /* if( j.status == 1 ) {  // реєстрація успішна
+                alert( 'реєстрація успішна' ) ;
+                window.location = '/' ;  // переходимо на головну сторінку
+            }
+            else {  // помилка реєстрації (повідомлення - у полі message)
+                alert( j.data.message ) ;
+            } */
+        } ) ;
+}
+
+function addItemButtonClick(e) {
+    console.log("Hello!");
+    // шукаємо форму - батьківській елемент кнопки (e.target)
+    const addItemForm = document.getElementById('add-product-form');
+    if( ! addItemForm ) {
+        throw "AddItem form not found" ;
+    }
+    // всередині форми signupForm знаходимо елементи
+    const productNameInput = addItemForm.querySelector('input[name="product-name"]');
+    if( ! productNameInput ) { throw "productNameInput not found" ; }
+    const productPriceInput = addItemForm.querySelector('input[name="product-price"]');
+    if( ! productPriceInput ) { throw "productPriceInput not found" ; }
+    const productDescriptionInput = addItemForm.querySelector('textarea[name="product-description"]');
+    if( ! productDescriptionInput ) { throw "productDescriptionInput not found" ; }
+    const productPhotoInput = addItemForm.querySelector('input[name="product-photo"]');
+    if( ! productPhotoInput ) { throw "productPhotoInput not found" ; }
+
+    /// Валідація даних
+    let isFormValid = true ;
+    /*
+        if( productNameInput.value === "" ) {
+            productNameInput.classList.remove("valid");
+            productNameInput.classList.add("invalid");
+            isFormValid = false ;
+        }
+        else {
+            productNameInput.classList.remove("invalid");
+            productNameInput.classList.add("valid");
+        }
+
+        if( ! isFormValid ) return ;
+        /// кінець валідації
+    */
+    // формуємо дані для передачі на бекенд
+    const formData = new FormData() ;
+    formData.append( "product-name", productNameInput.value ) ;
+    formData.append( "product-price", productPriceInput.value ) ;
+    formData.append( "product-description", productDescriptionInput.value ) ;
+    if( productPhotoInput.files.length > 0 ) {
+        formData.append( "product-photo", productPhotoInput.files[0] ) ;
     }
 
     // передаємо - формуємо запит

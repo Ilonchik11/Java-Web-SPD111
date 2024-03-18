@@ -26,6 +26,7 @@
                 <li><a href="<%= context %>/cart"><i class="material-icons prefix">shopping_cart</i></a></li>
                 <li><a href="<%= context %>/promotion">Promotions</a></li>
                 <li><a href="<%= context %>/signup"><i class="material-icons prefix">person_add</i></a></li>
+                <li><a href="<%= context %>/additem">Add New Product</a></li>
             </ul>
         </div>
     </nav>
