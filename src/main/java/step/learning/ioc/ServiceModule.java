@@ -9,6 +9,8 @@ import step.learning.services.form.FormParseService;
 import step.learning.services.form.HybridFormParser;
 import step.learning.services.hash.HashService;
 import step.learning.services.hash.Md5HashService;
+import step.learning.services.kdf.HashKdfService;
+import step.learning.services.kdf.KdfService;
 import step.learning.servlets.AddItemServlet;
 
 public class ServiceModule extends AbstractModule {
@@ -20,6 +22,7 @@ public class ServiceModule extends AbstractModule {
         bind(DbService.class).to(MySqlDbService.class);
         bind(FormParseService.class).to(HybridFormParser.class);
         bind(AddItemParseService.class).to(HybridAddItemParser.class);
+        bind(KdfService.class).to(HashKdfService.class);
     }
 }
 
