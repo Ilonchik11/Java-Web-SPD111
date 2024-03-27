@@ -4,3 +4,9 @@
 .flex3 {
     flex: 3 !important;
 }
+.errorDiv {
+    border: 2px solid purple !important;
+    font-size: 16px !important;
+    margin: 10px;
+    text-align: center !important;
+}

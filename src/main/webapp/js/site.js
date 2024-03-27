@@ -56,11 +56,16 @@ function signupButtonClick(e) {
     if( ! repeatInput ) { throw "repeatInput not found" ; }
     const avatarInput = signupForm.querySelector('input[name="user-avatar"]');
     if( ! avatarInput ) { throw "avatarInput not found" ; }
+    const errorDiv = document.querySelector('.errorDiv');
+    if (!errorDiv) {
+        throw "errorDiv not found";
+    }
+
 
     /// Валідація даних
     let isFormValid = true ;
 
-    if( nameInput.value == "" ) {
+    if( nameInput.value === "" ) {
         nameInput.classList.remove("valid");
         nameInput.classList.add("invalid");
         isFormValid = false ;
@@ -70,7 +75,46 @@ function signupButtonClick(e) {
         nameInput.classList.add("valid");
     }
 
-    if( ! isFormValid ) return ;
+    if( emailInput.value === "" ) {
+        emailInput.classList.remove("valid");
+        emailInput.classList.add("invalid");
+        isFormValid = false ;
+    }
+    else {
+        emailInput.classList.remove("invalid");
+        emailInput.classList.add("valid");
+    }
+
+    if( passwordInput.value === "" ) {
+        passwordInput.classList.remove("valid");
+        passwordInput.classList.add("invalid");
+        isFormValid = false ;
+    }
+    else {
+        passwordInput.classList.remove("invalid");
+        passwordInput.classList.add("valid");
+    }
+
+    if( repeatInput.value === "" || passwordInput.value !== repeatInput.value) {
+        repeatInput.classList.remove("valid");
+        repeatInput.classList.add("invalid");
+        isFormValid = false ;
+    }
+    else {
+        repeatInput.classList.remove("invalid");
+        repeatInput.classList.add("valid");
+    }
+
+    if( ! isFormValid ) {
+        passwordInput.value = '';
+        repeatInput.value = '';
+        errorDiv.style.display = "block";
+        /*errorDiv.style.border = "2px solid purple;"
+        errorDiv.style.font = "16px";
+        errorDiv.style.height = "30px"; */
+        errorDiv.textContent = "Виникли помилки реєстрації. Будь ласка спробуйте ще раз!";
+        return ;
+    }
     /// кінець валідації
 
     // формуємо дані для передачі на бекенд
@@ -85,16 +129,23 @@ function signupButtonClick(e) {
     // передаємо - формуємо запит
     fetch( window.location.href, { method: 'POST', body: formData } )
         .then( r => r.json() )
+        .then( data => {
+            console.log(data);
+            if (data.meta.status === "success") {
+                alert('Реєстрація успішна');
+                window.location = '/Java_Web_SPD111/'; // переходимо на головну сторінку
+                console.log("Success");
+            } else {
+                errorDiv.textContent += data.message;
+                console.error("Error during registration:", data.message);
+                // Тут ви можете зробити щось із повідомленням про помилку, наприклад, вивести його на сторінку або показати модальне вікно
+            }
+        } ) ;
+    /*fetch( window.location.href, { method: 'POST', body: formData } )
+        .then( r => r.json() )
         .then( j => {
             console.log(j);
-            /* if( j.status == 1 ) {  // реєстрація успішна
-                alert( 'реєстрація успішна' ) ;
-                window.location = '/' ;  // переходимо на головну сторінку
-            }
-            else {  // помилка реєстрації (повідомлення - у полі message)
-                alert( j.data.message ) ;
-            } */
-        } ) ;
+        } ) ;*/
 }
 
 function addItemButtonClick(e) {
