@@ -23,7 +23,12 @@ document.addEventListener( 'DOMContentLoaded', () => {
         "startingTop": 		'4%',	// Starting top offset
         "endingTop": 		'10%'	// Ending top offset
     });
+    checkAuth();
 });
+
+function getContext() {
+    return window.location.pathname.split('/')[1];
+}
 
 function authButtonClick(e) {
     const emailInput = document.querySelector('input[name="auth-email"]');
@@ -32,11 +37,34 @@ function authButtonClick(e) {
     if( ! passwordInput ) { throw "'auth-password' not found" ; }
 
     // console.log( emailInput.value, passwordInput.value ) ;
-    fetch(`/auth?email=${emailInput.value}&password=${passwordInput.value}`, {
-        method: 'PATCH'
+    fetch(`/${getContext()}/auth?email=${emailInput.value}&password=${passwordInput.value}`, {
+        method: 'GET'
     })
         .then( r => r.json() )
-        .then( console.log ) ;
+        .then( j => {
+            if(j.data == null || typeof j.data.token == "undefined") {
+                document.getElementById("modal-auth-message").innerText = "У вході відмовлено";
+            }
+            else {
+                // authorisation with token assumes their further saving and usage
+                // they are in the local storage ...
+                localStorage.setItem("auth-token", j.data.token);
+                window.location.reload();
+            }
+        } ) ;
+}
+
+function checkAuth() {
+    // ... Before loading the page we check if the authentication data in the local storage exist
+    const authToken = localStorage.getItem("auth-token");
+    if(authToken) {
+        // token validation -> user data
+        fetch(`/${getContext()}/auth?token=${authToken}`, {
+            method: 'POST'
+        })
+            .then( r => r.json() )
+            .then( console.log);
+    }
 }
 
 function signupButtonClick(e) {
