@@ -35,6 +35,14 @@ public class UserDao {
         return null;
     }
     public String generateToken(User user) {
+        // Check if user has already ahd a valid token
+        String existingToken = getValidToken(user);
+        if(existingToken != null) {
+            // Extend token expiry time
+            extendTokenExpiry(existingToken);
+            return existingToken;
+        }
+
         String sql = "INSERT INTO Tokens(token_id,user_id,token_expires) VALUES(?,?,?)";
         try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
             String token = UUID.randomUUID().toString();
@@ -48,6 +56,54 @@ public class UserDao {
             System.err.println(ex.getMessage());
             System.out.println(sql);
         }
+        return null;
+    }
+    private String getValidToken(User user) {
+        String sql = "SELECT token_id FROM Tokens WHERE user_id = ? AND token_expires > CURRENT_TIMESTAMP LIMIT 1";
+
+        try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
+            prep.setString(1, user.getId().toString());
+            ResultSet res = prep.executeQuery();
+            if(res.next()) {
+                return res.getString("token_id");
+            }
+        }
+        catch (SQLException ex) {
+            System.err.println(ex.getMessage());
+            System.out.println(sql);
+        }
+
+        return null;
+    }
+    private void extendTokenExpiry(String token) {
+        String sql = "UPDATE Tokens SET token_expires = ? WHERE token_id = ?";
+        try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
+            Timestamp currentExpiry = getCurrentExpiry(token);
+            // Extend expiry time to half of standard term
+            Timestamp newExpiry = new Timestamp(currentExpiry.getTime() + (long)(0.5 * 60 * 5 * 1000));
+            prep.setTimestamp(1, newExpiry);
+            prep.setString(2, token);
+            prep.executeUpdate();
+        }
+        catch (SQLException ex) {
+            System.err.println(ex.getMessage());
+            System.out.println(sql);
+        }
+    }
+    private Timestamp getCurrentExpiry(String token) {
+        String sql = "SELECT token_expires FROM Tokens WHERE token_id = ? LIMIT 1";
+        try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
+            prep.setString(1, token);
+            ResultSet res = prep.executeQuery();
+            if(res.next()) {
+                return res.getTimestamp("token_expires");
+            }
+        }
+        catch(SQLException ex) {
+            System.err.println(ex.getMessage());
+            System.out.println(sql);
+        }
+
         return null;
     }
     public User getUserByEmail(String email) {
