@@ -63,8 +63,49 @@ function checkAuth() {
             method: 'POST'
         })
             .then( r => r.json() )
-            .then( console.log);
+            .then( j => {
+                if(j.meta.status == 'success') {
+                    // замінити кнопку входу на аватарку користувача
+                    document.querySelector('[data-auth="avatar"]')
+                        .innerHTML = `<img title="${j.data.name}" class="nav-avatar" src="/${getContext()}/img/avatar/${j.data.avatar}"/>`;
+                    const product = document.querySelector('[data-auth="product"]');
+                    if(product) {
+                        fetch(`/${getContext()}/product.jsp`)
+                            .then(r => r.text())
+                            .then(t => {
+                                product.innerHTML = t;
+                                document.getElementById("add-product-button")
+                                    .addEventListener('click', addProductClick);
+                            });
+                    }
+                }
+            });
     }
+}
+
+function addProductClick(e) {
+    // Збираємо дані з форми додавання продукту
+    const form = e.target.closest('form');
+    const name = form.querySelector("#product-name").value.trim();
+    const price = Number(form.querySelector("#product-price").value);
+    const description = form.querySelector("#product-description").value.trim();
+    const fileInput = form.querySelector("#product-img");
+    // Проводимо валідацію
+
+    // Формуємо дані для передачі на сервер
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("price", price);
+    formData.append("description", description);
+    formData.append("image", fileInput.files[0]);
+    formData.append("token", localStorage.getItem("auth-token"));
+    // надсилаємо дані
+    fetch(`/${getContext()}/shop-api`, {
+        method: 'POST',
+        body: formData
+    })
+        .then( r => r.json() )
+        .then( console.log );
 }
 
 function signupButtonClick(e) {

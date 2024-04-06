@@ -27,8 +27,9 @@
                 <li><a href="<%= context %>/cart"><i class="material-icons prefix">shopping_cart</i></a></li>
                 <li><a href="<%= context %>/promotion">Promotions</a></li>
                 <li><a href="<%= context %>/signup"><i class="material-icons prefix">person_add</i></a></li>
+                <li><a href="<%= context %>/shop"><i class="material-icons prefix">shop</i></a></li>
                 <li><a href="<%= context %>/additem">Add New Product</a></li>
-                <li><a href="#auth-modal" class="modal-trigger"><i class="material-icons">key</i></a></li>
+                <li data-auth="avatar"><a href="#auth-modal" class="modal-trigger"><i class="material-icons">key</i></a></li>
             </ul>
         </div>
     </nav>
