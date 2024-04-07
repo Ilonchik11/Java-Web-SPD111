@@ -94,22 +94,20 @@ public class AuthServlet extends HttpServlet {
     private void sendRest(HttpServletResponse resp, String status, String message, String token) throws IOException {
         JsonObject rest = new JsonObject();
         JsonObject meta = new JsonObject();
-
-        meta.addProperty("service", "auth");
-        meta.addProperty("status", status);
-        meta.addProperty("message", message);
-        meta.addProperty("time", Instant.now().getEpochSecond());
-
+        meta.addProperty( "service", "auth");
+        meta.addProperty( "status",  status  );
+        meta.addProperty( "message", message );
+        meta.addProperty( "time",    Instant.now().getEpochSecond() );
         rest.add("meta", meta);
 
         JsonObject data = null;
-        if(token != null) {
+        if( token != null ) {
             data = new JsonObject();
             data.addProperty("token", token);
         }
         rest.add("data", data);
 
         Gson gson = new GsonBuilder().serializeNulls().create();
-        resp.getWriter().print(gson.toJson(rest));
+        resp.getWriter().print( gson.toJson( rest ) );
     }
 }

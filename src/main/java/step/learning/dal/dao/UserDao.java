@@ -43,18 +43,20 @@ public class UserDao {
             return existingToken;
         }
 
-        String sql = "INSERT INTO Tokens(token_id,user_id,token_expires) VALUES(?,?,?)";
-        try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
-            String token = UUID.randomUUID().toString();
-            prep.setString(1, token);
-            prep.setString(2, user.getId().toString());
-            prep.setTimestamp(3, new Timestamp(new java.util.Date().getTime() + 60 * 5 * 1000));
-            prep.executeUpdate();
-            return token;
-        }
-        catch(SQLException ex) {
-            System.err.println(ex.getMessage());
-            System.out.println(sql);
+        else {
+            String sql = "INSERT INTO Tokens(token_id,user_id,token_expires) VALUES(?,?,?)";
+            try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
+                String token = UUID.randomUUID().toString();
+                prep.setString(1, token);
+                prep.setString(2, user.getId().toString());
+                prep.setTimestamp(3, new Timestamp(new java.util.Date().getTime() + 60 * 5 * 1000));
+                prep.executeUpdate();
+                return token;
+            }
+            catch(SQLException ex) {
+                System.err.println(ex.getMessage());
+                System.out.println(sql);
+            }
         }
         return null;
     }
@@ -64,7 +66,7 @@ public class UserDao {
         try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
             prep.setString(1, user.getId().toString());
             ResultSet res = prep.executeQuery();
-            if(res.next()) {
+             if(res.next()) {
                 return res.getString("token_id");
             }
         }
@@ -78,9 +80,10 @@ public class UserDao {
     private void extendTokenExpiry(String token) {
         String sql = "UPDATE Tokens SET token_expires = ? WHERE token_id = ?";
         try(PreparedStatement prep = dbService.getConnection().prepareStatement(sql)) {
-            Timestamp currentExpiry = getCurrentExpiry(token);
-            // Extend expiry time to half of standard term
-            Timestamp newExpiry = new Timestamp(currentExpiry.getTime() + (long)(0.5 * 60 * 5 * 1000));
+//            Timestamp currentExpiry = getCurrentExpiry(token);
+//            // Extend expiry time to half of standard term
+//            Timestamp newExpiry = new Timestamp(currentExpiry.getTime() + (long)(0.5 * 60 * 5 * 1000));
+            Timestamp newExpiry = new Timestamp(new java.util.Date().getTime() + (long)(0.5 * 60 * 5 * 1000));
             prep.setTimestamp(1, newExpiry);
             prep.setString(2, token);
             prep.executeUpdate();

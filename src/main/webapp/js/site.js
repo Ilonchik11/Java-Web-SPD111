@@ -1,4 +1,4 @@
-document.addEventListener( 'DOMContentLoaded', () => {
+﻿document.addEventListener( 'DOMContentLoaded', () => {
     // шукаємо кнопку реєстрації, якщо знаходимо - додаємо обробник
     const signupButton = document.getElementById("signup-button");
     if(signupButton) { signupButton.onclick = signupButtonClick; }
@@ -42,12 +42,13 @@ function authButtonClick(e) {
     })
         .then( r => r.json() )
         .then( j => {
-            if(j.data == null || typeof j.data.token == "undefined") {
+            if( j.data == null || typeof j.data.token == "undefined" ) {
                 document.getElementById("modal-auth-message").innerText = "У вході відмовлено";
             }
             else {
-                // authorisation with token assumes their further saving and usage
-                // they are in the local storage ...
+                // авторизація токенами передбачає їх збереження з метою подальшого використання
+                // Для того щоб токени були доступні після перезавантаження їх вміщують
+                // до постійного сховища браузера - localStorage ...
                 localStorage.setItem("auth-token", j.data.token);
                 window.location.reload();
             }
@@ -55,19 +56,18 @@ function authButtonClick(e) {
 }
 
 function checkAuth() {
-    // ... Before loading the page we check if the authentication data in the local storage exist
+    // ... при завантаженні сторінки перевіряємо наявність даних автентифікації у localStorage
     const authToken = localStorage.getItem("auth-token");
-    if(authToken) {
-        // token validation -> user data
+    if( authToken ) {
+        // перевіряємо токен на валідність і одержуємо дані про користувача
         fetch(`/${getContext()}/auth?token=${authToken}`, {
             method: 'POST'
         })
             .then( r => r.json() )
             .then( j => {
                 if(j.meta.status == 'success') {
-                    // замінити кнопку входу на аватарку користувача
-                    document.querySelector('[data-auth="avatar"]')
-                        .innerHTML = `<img title="${j.data.name}" class="nav-avatar" src="/${getContext()}/img/avatar/${j.data.avatar}"/>`;
+                    // замінити "кнопку" входу на аватарку користувача
+                    document.querySelector('[data-auth="avatar"]').innerHTML = `<img title="${j.data.name}" class="nav-avatar" src="/${getContext()}/img/avatar/${j.data.avatar}" />`
                     const product = document.querySelector('[data-auth="product"]');
                     if(product) {
                         fetch(`/${getContext()}/product.jsp`)
@@ -79,33 +79,92 @@ function checkAuth() {
                             });
                     }
                 }
-            });
+            } );
     }
 }
 
 function addProductClick(e) {
     // Збираємо дані з форми додавання продукту
     const form = e.target.closest('form');
+    if( ! form ) {
+        throw "Form not found" ;
+    }
     const name = form.querySelector("#product-name").value.trim();
     const price = Number(form.querySelector("#product-price").value);
     const description = form.querySelector("#product-description").value.trim();
     const fileInput = form.querySelector("#product-img");
-    // Проводимо валідацію
 
+    const errorElements = form.querySelectorAll('.error-text');
+    errorElements.forEach(element => {
+        element.innerText = '';
+    });
+    // Проводимо валідацію
+    let valid = true;
+
+    if (name.length < 3) {
+        form.querySelector("#product-name-error").innerText = "Назва товару повинна містити принаймні 10 символів";
+        valid = false;
+    }
+
+    if (price <= 0 || isNaN(price)) {
+        form.querySelector("#product-price-error").innerText = "Ціна товару повинна бути додатнім числом";
+        valid = false;
+    }
+
+    if (description.length < 10) {
+        form.querySelector("#product-description-error").innerText = "Опис товару повинен містити принаймні 30 символів";
+        valid = false;
+    }
+
+    // Проверка на допустимые разрешения для изображения
+    if (fileInput.files.length > 0) {
+        const dotPosition = fileInput.value.lastIndexOf('.');
+        const ext = fileInput.value.substring(dotPosition).toLowerCase();
+        const allowedExtensions = [".jpg", ".jpeg", ".png"];
+
+        if (!allowedExtensions.includes(ext)) {
+            const imgErrorSpan = form.querySelector("#product-img-error");
+            if (imgErrorSpan) {
+                imgErrorSpan.innerText = "Недопустиме розширення зображення. Допустимі: .jpg, .jpeg, .png";
+            }
+            valid = false;
+        }
+    } else {
+        const imgErrorSpan = form.querySelector("#product-img-error");
+        if (imgErrorSpan) {
+            imgErrorSpan.innerText = "Файл зображення не обрано";
+        }
+        valid = false;
+    }
+
+    const token = localStorage.getItem("auth-token");
+    if(token == null) {
+        const tokenErrorDiv = document.getElementById('token-error');
+        if(tokenErrorDiv) {
+            tokenErrorDiv.innerText = 'Error 401/403';
+        }
+        valid = false;
+    }
+
+    // if (!valid) { return; }
     // Формуємо дані для передачі на сервер
     const formData = new FormData();
     formData.append("name", name);
     formData.append("price", price);
     formData.append("description", description);
     formData.append("image", fileInput.files[0]);
-    formData.append("token", localStorage.getItem("auth-token"));
+    formData.append("token", token);
     // надсилаємо дані
     fetch(`/${getContext()}/shop-api`, {
         method: 'POST',
         body: formData
     })
-        .then( r => r.json() )
-        .then( console.log );
+        .then(r => r.json()
+        .then(data => {
+            if (data.meta.status === 'error') {
+                console.log(data.meta.message);
+            }
+        }));
 }
 
 function signupButtonClick(e) {
@@ -210,11 +269,6 @@ function signupButtonClick(e) {
                 // Тут ви можете зробити щось із повідомленням про помилку, наприклад, вивести його на сторінку або показати модальне вікно
             }
         } ) ;
-    /*fetch( window.location.href, { method: 'POST', body: formData } )
-        .then( r => r.json() )
-        .then( j => {
-            console.log(j);
-        } ) ;*/
 }
 
 function addItemButtonClick(e) {

@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.fileupload.FileItem;
 import step.learning.dal.dao.ProductDao;
+import step.learning.dal.dao.UserDao;
 import step.learning.dal.dto.Product;
 import step.learning.dal.dto.User;
 import step.learning.services.form.FormParseResult;
@@ -19,6 +20,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,11 +29,13 @@ import java.util.UUID;
 public class ShopApiServlet extends HttpServlet {
     private final FormParseService formParseService;
     private final ProductDao productDao;
+    private final UserDao userDao;
 
     @Inject
-    public ShopApiServlet(FormParseService formParseService, ProductDao productDao) {
+    public ShopApiServlet(FormParseService formParseService, ProductDao productDao, UserDao userDao) {
         this.formParseService = formParseService;
         this.productDao = productDao;
+        this.userDao = userDao;
     }
 
     @Override
@@ -39,12 +44,22 @@ public class ShopApiServlet extends HttpServlet {
         Map<String,String> fields = parseResult.getFields() ;
         Map<String, FileItem> files = parseResult.getFiles() ;
 
-        // Перевірити токен та його валідність
+         // Перевірити токен та його валідність
+         String token = fields.get("token");
+         if (token == null || token.isEmpty()) {
+             sendRest(resp, "error", "Error 401/403. Token invalid or expired", null);
+             return;
+         }
 
         // Перевірити поля з даними
+        int minNameLength = 10;
         String name = fields.get("name");
         if( name == null || name.isEmpty() ) {
             sendRest( resp, "error", "Property 'name' required", null ) ;
+            return ;
+        }
+        if(name.length() < minNameLength) {
+            sendRest( resp, "error", "Min length of 'name' is 10 symbols!", null ) ;
             return ;
         }
         String price = fields.get("price");
@@ -52,9 +67,18 @@ public class ShopApiServlet extends HttpServlet {
             sendRest( resp, "error", "Property 'price' required", null ) ;
             return ;
         }
+        if(!isDouble(price)) {
+            sendRest( resp, "error", "Property 'price' should be a number!", null ) ;
+            return ;
+        }
+        int minDescriptionLength = 30;
         String description = fields.get("description");
         if( description == null || description.isEmpty() ) {
             sendRest( resp, "error", "Property 'description' required", null ) ;
+            return ;
+        }
+        if(description.length() < minDescriptionLength) {
+            sendRest( resp, "error", "Min length of 'description' is 30 symbols!", null ) ;
             return ;
         }
         Product product = new Product();
@@ -68,6 +92,8 @@ public class ShopApiServlet extends HttpServlet {
             // image - не обов'язкове поле, але якщо воно є, то проходить перевірку
             String path = req.getServletContext().getRealPath("/") +
                     "img" + File.separator + "products" + File.separator;
+            // Допустимі типи файлів
+            List<String> allowedExtensions = Arrays.asList(".jpg", "jpeg", ".png");
             // визначаємо тип файлу (розширення)
             int dotPosition = image.getName().lastIndexOf('.');
             if( dotPosition < 0 ) {
@@ -75,6 +101,11 @@ public class ShopApiServlet extends HttpServlet {
                 return ;
             }
             String ext = image.getName().substring( dotPosition );
+            // перевіряємо, чи допустиме розширення у файла
+            if(!allowedExtensions.contains(ext.toLowerCase())) {
+                sendRest(resp, "error", "Invalid image file extension", null);
+                return;
+            }
             // формуємо нове ім'я, зберігаємо розширення
             String savedName ;
             File savedFile ;
@@ -100,6 +131,14 @@ public class ShopApiServlet extends HttpServlet {
         }
     }
 
+    public boolean isDouble(String s) {
+        try {
+            Double.parseDouble(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 
     private void sendRest(HttpServletResponse resp, String status, String message, Object data) throws IOException {
         JsonObject rest = new JsonObject();
