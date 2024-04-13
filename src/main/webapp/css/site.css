@@ -17,3 +17,8 @@
     vertical-align: middle;
     margin: 10px 0;
 }
+
+.product-cart-btn {
+    bottom: 7px !important;
+    right: 7px !important;
+}
